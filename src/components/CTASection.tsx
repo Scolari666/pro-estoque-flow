@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const CTASection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-20 lg:py-32 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -18,11 +21,11 @@ export const CTASection = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="group">
+            <Button size="lg" className="group" onClick={() => navigate("/auth")}>
               Começar Agora - É Grátis
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-smooth" />
             </Button>
-            <Button size="lg" variant="outline" className="border-2">
+            <Button size="lg" variant="outline" className="border-2" onClick={() => navigate("/dashboard")}>
               Agendar Demonstração
             </Button>
           </div>

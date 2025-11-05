@@ -1,8 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-image.jpg";
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   return (
     <section className="gradient-hero relative overflow-hidden py-20 lg:py-32">
       <div className="container mx-auto px-4">
@@ -23,13 +28,22 @@ export const HeroSection = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="group">
-                Experimente Grátis por 30 Dias
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-smooth" />
-              </Button>
-              <Button size="lg" variant="outline" className="border-2">
-                Ver Demonstração
-              </Button>
+              {user ? (
+                <Button size="lg" className="group" onClick={() => navigate("/dashboard")}>
+                  Ir para Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-smooth" />
+                </Button>
+              ) : (
+                <>
+                  <Button size="lg" className="group" onClick={() => navigate("/auth")}>
+                    Experimente Grátis por 30 Dias
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-smooth" />
+                  </Button>
+                  <Button size="lg" variant="outline" className="border-2" onClick={() => navigate("/dashboard")}>
+                    Ver Demonstração
+                  </Button>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-8 pt-4">
