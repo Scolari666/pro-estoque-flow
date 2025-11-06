@@ -1,168 +1,182 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Package, AlertTriangle, DollarSign, TrendingUp } from "lucide-react";
-import { useProducts } from "@/hooks/useProducts";
-import { useStockMovements } from "@/hooks/useStockMovements";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { InitialSetup } from "@/components/InitialSetup";
+import { Package, TrendingDown, TrendingUp, AlertTriangle, DollarSign } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
+const statsData = [
+  {
+    title: "Valor Total em Estoque",
+    value: "R$ 487.350",
+    change: "+12.5%",
+    icon: DollarSign,
+    trend: "up",
+  },
+  {
+    title: "Produtos Cadastrados",
+    value: "1.247",
+    change: "+23",
+    icon: Package,
+    trend: "up",
+  },
+  {
+    title: "Produtos em Alerta",
+    value: "18",
+    change: "-5",
+    icon: AlertTriangle,
+    trend: "down",
+  },
+  {
+    title: "Saídas Hoje",
+    value: "156",
+    change: "+8.2%",
+    icon: TrendingUp,
+    trend: "up",
+  },
+];
+
+const salesData = [
+  { name: "Jan", vendas: 4000, entradas: 2400 },
+  { name: "Fev", vendas: 3000, entradas: 1398 },
+  { name: "Mar", vendas: 2000, entradas: 9800 },
+  { name: "Abr", vendas: 2780, entradas: 3908 },
+  { name: "Mai", vendas: 1890, entradas: 4800 },
+  { name: "Jun", vendas: 2390, entradas: 3800 },
+];
+
+const topProducts = [
+  { name: "Produto A", value: 35 },
+  { name: "Produto B", value: 25 },
+  { name: "Produto C", value: 20 },
+  { name: "Produto D", value: 12 },
+  { name: "Outros", value: 8 },
+];
+
+const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))", "hsl(var(--muted-foreground))"];
+
+const recentAlerts = [
+  { id: 1, product: "Café Pilão 500g", type: "Estoque Mínimo", quantity: 5, status: "critical" },
+  { id: 2, product: "Leite Integral 1L", type: "Validade Próxima", quantity: 12, status: "warning" },
+  { id: 3, product: "Arroz Tio João 5kg", type: "Estoque Mínimo", quantity: 8, status: "critical" },
+];
 
 const Dashboard = () => {
-  const { products } = useProducts();
-  const { movements } = useStockMovements();
-
-  const totalProducts = products?.length || 0;
-  const productsInAlert = products?.filter(p => p.current_stock <= p.minimum_stock).length || 0;
-
-  const totalValue = products?.reduce((acc, p) => acc + (p.current_stock * p.sale_price), 0) || 0;
-
-  const todayMovements = movements?.filter(m => {
-    const today = new Date().toDateString();
-    const movDate = new Date(m.created_at).toDateString();
-    return today === movDate && m.type === "saida";
-  }).length || 0;
-
-  const statsData = [
-    {
-      title: "Valor Total em Estoque",
-      value: new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(totalValue),
-      change: "+12.5%",
-      icon: DollarSign,
-      trend: "up",
-    },
-    {
-      title: "Produtos Cadastrados",
-      value: totalProducts.toString(),
-      change: `+${totalProducts}`,
-      icon: Package,
-      trend: "up",
-    },
-    {
-      title: "Produtos em Alerta",
-      value: productsInAlert.toString(),
-      change: productsInAlert > 0 ? "Atenção necessária" : "Tudo OK",
-      icon: AlertTriangle,
-      trend: productsInAlert > 0 ? "down" : "up",
-    },
-    {
-      title: "Saídas Hoje",
-      value: todayMovements.toString(),
-      change: "+8.2%",
-      icon: TrendingUp,
-      trend: "up",
-    },
-  ];
-
-  const movementsByMonth = movements?.reduce((acc, m) => {
-    const month = new Date(m.created_at).toLocaleDateString("pt-BR", { month: "short" });
-    const existing = acc.find(item => item.name === month);
-
-    if (existing) {
-      if (m.type === "entrada") {
-        existing.entradas += m.quantity;
-      } else {
-        existing.saidas += m.quantity;
-      }
-    } else {
-      acc.push({
-        name: month,
-        entradas: m.type === "entrada" ? m.quantity : 0,
-        saidas: m.type === "saida" ? m.quantity : 0,
-      });
-    }
-
-    return acc;
-  }, [] as { name: string; entradas: number; saidas: number }[]) || [];
-
-  const lowStockProducts = products?.filter(p => p.current_stock <= p.minimum_stock).slice(0, 5) || [];
-
   return (
-    <InitialSetup>
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-3xl font-bold">Dashboard</h2>
-            <p className="text-muted-foreground">Visão geral do seu estoque em tempo real</p>
-          </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold">Dashboard</h2>
+          <p className="text-muted-foreground">Visão geral do seu estoque em tempo real</p>
+        </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {statsData.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <Card key={index} className="border-2 hover:shadow-elegant transition-smooth">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </CardTitle>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className={`text-xs ${stat.trend === 'up' ? 'text-secondary' : 'text-destructive'}`}>
-                      {stat.change}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {statsData.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="border-2 hover:shadow-elegant transition-smooth">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className={`text-xs ${stat.trend === 'up' ? 'text-secondary' : 'text-primary'}`}>
+                    {stat.change} desde o último mês
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
+        {/* Charts Row */}
+        <div className="grid gap-4 md:grid-cols-2">
           <Card className="border-2">
             <CardHeader>
-              <CardTitle>Movimentações</CardTitle>
-              <CardDescription>Entradas e saídas por período</CardDescription>
+              <CardTitle>Movimentações Mensais</CardTitle>
+              <CardDescription>Entradas vs Saídas dos últimos 6 meses</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={movementsByMonth}>
+                <LineChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
+                  <Line type="monotone" dataKey="vendas" stroke="hsl(var(--primary))" strokeWidth={2} />
                   <Line type="monotone" dataKey="entradas" stroke="hsl(var(--secondary))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="saidas" stroke="hsl(var(--destructive))" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          {lowStockProducts.length > 0 && (
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Alertas de Estoque Baixo</CardTitle>
-                <CardDescription>Produtos que precisam de atenção imediata</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {lowStockProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between p-4 rounded-lg border-2 hover:shadow-sm transition-smooth"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 rounded-full bg-destructive" />
-                        <div>
-                          <p className="font-medium">{product.name}</p>
-                          <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{product.current_stock} unidades</p>
-                        <p className="text-xs text-muted-foreground">
-                          Mínimo: {product.minimum_stock}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle>Produtos Mais Vendidos</CardTitle>
+              <CardDescription>Distribuição de vendas por produto</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={topProducts}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label
+                  >
+                    {topProducts.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
-      </DashboardLayout>
-    </InitialSetup>
+
+        {/* Alerts Table */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle>Alertas Recentes</CardTitle>
+            <CardDescription>Produtos que precisam de atenção imediata</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between p-4 rounded-lg border-2 hover:shadow-sm transition-smooth"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        alert.status === "critical" ? "bg-destructive" : "bg-yellow-500"
+                      }`}
+                    />
+                    <div>
+                      <p className="font-medium">{alert.product}</p>
+                      <p className="text-sm text-muted-foreground">{alert.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{alert.quantity} unidades</p>
+                    <p className="text-xs text-muted-foreground">
+                      {alert.status === "critical" ? "Ação urgente" : "Atenção"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 };
 
