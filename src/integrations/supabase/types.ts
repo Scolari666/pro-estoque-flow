@@ -14,6 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      company_settings: {
+        Row: {
+          address: string | null
+          cnpj: string | null
+          company_name: string
+          created_at: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          cnpj?: string | null
+          company_name: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string | null
+          company_name?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          barcode: string | null
+          category_id: string | null
+          cost_price: number
+          created_at: string | null
+          current_stock: number
+          description: string | null
+          id: string
+          image_url: string | null
+          max_stock: number | null
+          min_stock: number
+          name: string
+          sku: string
+          status: Database["public"]["Enums"]["product_status"]
+          unit_price: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          category_id?: string | null
+          cost_price?: number
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          max_stock?: number | null
+          min_stock?: number
+          name: string
+          sku: string
+          status?: Database["public"]["Enums"]["product_status"]
+          unit_price?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          barcode?: string | null
+          category_id?: string | null
+          cost_price?: number
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          max_stock?: number | null
+          min_stock?: number
+          name?: string
+          sku?: string
+          status?: Database["public"]["Enums"]["product_status"]
+          unit_price?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_name: string | null
@@ -38,6 +169,53 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          created_at: string | null
+          id: string
+          movement_date: string | null
+          notes: string | null
+          product_id: string
+          quantity: number
+          total_price: number | null
+          type: Database["public"]["Enums"]["movement_type"]
+          unit_price: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movement_date?: string | null
+          notes?: string | null
+          product_id: string
+          quantity: number
+          total_price?: number | null
+          type: Database["public"]["Enums"]["movement_type"]
+          unit_price?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movement_date?: string | null
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          total_price?: number | null
+          type?: Database["public"]["Enums"]["movement_type"]
+          unit_price?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -46,7 +224,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      movement_type: "entrada" | "saida" | "ajuste"
+      product_status: "ativo" | "inativo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -173,6 +352,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      movement_type: ["entrada", "saida", "ajuste"],
+      product_status: ["ativo", "inativo"],
+    },
   },
 } as const
