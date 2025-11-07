@@ -5,8 +5,12 @@ import {
   Bell,
   Settings,
   BarChart3,
+  Users,
+  Mail,
+  Shield,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
   Sidebar,
@@ -20,7 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const menuItems = [
+const clientMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Produtos", url: "/dashboard/products", icon: Package },
   { title: "Movimentações", url: "/dashboard/movements", icon: TrendingUp },
@@ -29,14 +33,24 @@ const menuItems = [
   { title: "Configurações", url: "/dashboard/settings", icon: Settings },
 ];
 
+const adminMenuItems = [
+  { title: "Painel Admin", url: "/admin", icon: Shield },
+  { title: "Gerenciar Clientes", url: "/admin/clients", icon: Users },
+  { title: "Convites", url: "/admin/invitations", icon: Mail },
+];
+
 export function AppSidebar() {
   const { open } = useSidebar();
+  const { role } = useAuth();
+
+  const menuItems = role === 'admin' ? adminMenuItems : clientMenuItems;
+  const menuLabel = role === 'admin' ? 'Menu Admin' : 'Menu Principal';
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel>{menuLabel}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (

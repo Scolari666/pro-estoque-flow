@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, role } = useAuth();
 
   if (loading) {
@@ -16,9 +16,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirect admins to admin dashboard
-  if (role === 'admin' && window.location.pathname.startsWith('/dashboard')) {
-    return <Navigate to="/admin" replace />;
+  if (role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

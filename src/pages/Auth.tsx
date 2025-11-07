@@ -25,6 +25,9 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
+  const [hasInvitationCode, setHasInvitationCode] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,25 +76,94 @@ const Auth = () => {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email: signupEmail,
-      password: signupPassword,
-      options: {
-        data: {
-          full_name: signupName,
-        },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
+    // If invitation code is provided, validate it first
+    if (hasInvitationCode && invitationCode.trim()) {
+      const { data: invitationResult, error: invitationError } = await supabase
+        .rpc('use_invitation_code', { _code: invitationCode.trim() });
 
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
+      // Type guard for invitation result
+      const result = invitationResult as { success: boolean; message?: string; role?: 'admin' | 'client'; created_by?: string } | null;
+
+      if (invitationError || !result?.success) {
+        toast.error(result?.message || 'Código de convite inválido');
+        setLoading(false);
+        return;
+      }
+
+      // Sign up with role from invitation
+      const { data: authData, error: signupError } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: {
+            full_name: signupName,
+            company_name: companyName,
+            invitation_code: invitationCode.trim(),
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (signupError) {
+        toast.error(signupError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Assign role to user
+      if (authData.user && result.role) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: result.role,
+          });
+
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
+        }
+      }
+
+      toast.success('Conta criada com sucesso! Redirecionando...');
+      navigate(result.role === 'admin' ? '/admin' : '/dashboard');
+    } else {
+      // Regular client signup without invitation code
+      const { data: authData, error: signupError } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: {
+            full_name: signupName,
+            company_name: companyName,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (signupError) {
+        toast.error(signupError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Assign client role by default
+      if (authData.user) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: 'client',
+          });
+
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
+        }
+      }
+
+      toast.success('Conta criada com sucesso! Redirecionando...');
+      navigate('/dashboard');
     }
 
-    toast.success("Conta criada com sucesso! Redirecionando...");
-    navigate("/dashboard");
     setLoading(false);
   };
 
@@ -178,6 +250,43 @@ const Auth = () => {
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-name">Nome da Empresa (opcional)</Label>
+                  <Input
+                    id="company-name"
+                    type="text"
+                    placeholder="Minha Empresa Ltda"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="has-invitation"
+                      checked={hasInvitationCode}
+                      onChange={(e) => setHasInvitationCode(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <Label htmlFor="has-invitation" className="cursor-pointer">
+                      Tenho código de convite
+                    </Label>
+                  </div>
+                </div>
+                {hasInvitationCode && (
+                  <div className="space-y-2">
+                    <Label htmlFor="invitation-code">Código de Convite</Label>
+                    <Input
+                      id="invitation-code"
+                      type="text"
+                      placeholder="XXXXXXXX"
+                      value={invitationCode}
+                      onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                      className="font-mono uppercase"
+                    />
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Criando conta..." : "Criar Conta"}
                 </Button>
